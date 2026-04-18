@@ -494,22 +494,33 @@ function getDateWindow() {
 }
 
 async function fetchPage(genreId, dateStart, dateEnd, page) {
-  const url = `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}&primary_release_date.gte=${dateStart}&primary_release_date.lte=${dateEnd}&region=US&with_release_type=3|2&sort_by=primary_release_date.asc&page=${page}&language=en-US`;
+  const params = new URLSearchParams({
+    api_key: API_KEY,
+    with_genres: genreId,
+    without_genres: '16,10770',
+    'primary_release_date.gte': dateStart,
+    'primary_release_date.lte': dateEnd,
+    with_original_language: 'en',
+    'popularity.gte': '15',
+    sort_by: 'popularity.desc',
+    page,
+    language: 'en-US'
+  });
+  const url = `${BASE_URL}/discover/movie?${params}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json();
 }
 
 async function fetchGenre(genreId, dateStart, dateEnd) {
+  // Only 2 pages per genre sorted by popularity desc — keeps quality, kills junk
   const first = await fetchPage(genreId, dateStart, dateEnd, 1);
-  const totalPages = Math.min(first.total_pages, 5); // cap at 5 pages per genre
+  const totalPages = Math.min(first.total_pages, 2);
   const results = [...first.results];
-  const promises = [];
-  for (let p = 2; p <= totalPages; p++) {
-    promises.push(fetchPage(genreId, dateStart, dateEnd, p));
+  if (totalPages > 1) {
+    const second = await fetchPage(genreId, dateStart, dateEnd, 2);
+    results.push(...second.results);
   }
-  const rest = await Promise.all(promises);
-  rest.forEach(r => results.push(...r.results));
   return results.map(m => ({ ...m, _matched_genre: genreId }));
 }
 
@@ -538,11 +549,14 @@ async function loadAllFilms() {
     );
 
     // Deduplicate by movie ID, preserving all genre tags
+    // Also filter out entries with no synopsis or suspiciously low popularity
     const filmMap = new Map();
     genreResults.forEach((films, idx) => {
       const genreId = GENRE_IDS[idx];
       films.forEach(film => {
         if (!film.release_date) return;
+        if (!film.overview || film.overview.trim().length < 20) return; // no synopsis = likely junk
+        if (film.popularity < 3) return; // extra safety net
         if (filmMap.has(film.id)) {
           // Add genre to existing entry
           filmMap.get(film.id)._genres.add(genreId);
