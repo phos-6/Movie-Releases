@@ -250,6 +250,8 @@
     gap: 0.5rem;
   }
 
+  .film-title-link { text-decoration: none; }
+  .film-title-link:hover .film-title { color: var(--accent); }
   .film-title {
     font-family: var(--display);
     font-size: 1.35rem;
@@ -280,6 +282,7 @@
   .genre-tag.mystery { border-color: #1e2a3a; color: #6090b8; }
   .genre-tag.sci-fi { border-color: #1e3a2a; color: #60b880; }
   .genre-tag.action { border-color: #2a2a3a; color: #8090c0; }
+  .genre-tag.comedy { border-color: #2a3a1e; color: #90c060; }
 
   .film-studio {
     font-family: var(--mono);
@@ -295,6 +298,7 @@
     max-width: 680px;
   }
 
+  .film-mobile-link { display: none; }
   .film-link-col {
     padding: 1.25rem 2rem 1.25rem 1rem;
     display: flex;
@@ -416,9 +420,13 @@
     .film-card { grid-template-columns: 70px 1fr; }
     .film-date { padding: 1rem 0.75rem 1rem 1.25rem; min-width: 70px; }
     .film-body { padding: 1rem; }
-    .film-link-col { display: none; }
-    .film-title { font-size: 1.1rem; }
+    .film-mobile-link { display: none; }
+  .film-link-col { display: none; }
+    .film-title-link { text-decoration: none; }
+  .film-title-link:hover .film-title { color: var(--accent); }
+  .film-title { font-size: 1.1rem; }
     .film-synopsis { font-size: 0.75rem; }
+    .film-mobile-link { display: inline-block; }
   }
 </style>
 </head>
@@ -443,6 +451,7 @@
   <button class="genre-btn" data-genre="9648">Mystery</button>
   <button class="genre-btn" data-genre="878">Sci-Fi</button>
   <button class="genre-btn" data-genre="28">Action</button>
+  <button class="genre-btn" data-genre="35">Comedy</button>
 </div>
 
 <div class="stats-bar" id="stats-bar">
@@ -460,20 +469,23 @@
 const API_KEY = '798305bccb176e0e19a68692c23dd2cd';
 const BASE_URL = 'https://api.themoviedb.org/3';
 
-const GENRE_IDS = [27, 53, 9648, 878, 28];
+const GENRE_IDS = [27, 53, 9648, 878, 28, 35];
+
 const GENRE_NAMES = {
   27: 'Horror',
   53: 'Thriller',
   9648: 'Mystery',
   878: 'Sci-Fi',
-  28: 'Action'
+  28: 'Action',
+  35: 'Comedy'
 };
 const GENRE_CSS = {
   27: 'horror',
   53: 'thriller',
   9648: 'mystery',
   878: 'sci-fi',
-  28: 'action'
+  28: 'action',
+  35: 'comedy'
 };
 
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -501,7 +513,7 @@ async function fetchPage(genreId, dateStart, dateEnd, page) {
     'primary_release_date.gte': dateStart,
     'primary_release_date.lte': dateEnd,
     with_original_language: 'en',
-    'popularity.gte': '15',
+    'popularity.gte': '10',
     sort_by: 'popularity.desc',
     page,
     language: 'en-US'
@@ -513,15 +525,9 @@ async function fetchPage(genreId, dateStart, dateEnd, page) {
 }
 
 async function fetchGenre(genreId, dateStart, dateEnd) {
-  // Only 2 pages per genre sorted by popularity desc — keeps quality, kills junk
+  // Single page only, sorted by popularity desc — top 20 per genre max
   const first = await fetchPage(genreId, dateStart, dateEnd, 1);
-  const totalPages = Math.min(first.total_pages, 2);
-  const results = [...first.results];
-  if (totalPages > 1) {
-    const second = await fetchPage(genreId, dateStart, dateEnd, 2);
-    results.push(...second.results);
-  }
-  return results.map(m => ({ ...m, _matched_genre: genreId }));
+  return first.results.slice(0, 20).map(m => ({ ...m, _matched_genre: genreId }));
 }
 
 async function fetchStudios(movieId) {
@@ -547,6 +553,7 @@ async function loadAllFilms() {
     const genreResults = await Promise.all(
       GENRE_IDS.map(id => fetchGenre(id, start, end))
     );
+    const allResults = genreResults;
 
     // Deduplicate by movie ID, preserving all genre tags
     // Also filter out entries with no synopsis or suspiciously low popularity
@@ -555,10 +562,8 @@ async function loadAllFilms() {
       const genreId = GENRE_IDS[idx];
       films.forEach(film => {
         if (!film.release_date) return;
-        if (!film.overview || film.overview.trim().length < 20) return; // no synopsis = likely junk
-        if (film.popularity < 3) return; // extra safety net
+        if (!film.overview || film.overview.trim().length < 20) return;
         if (filmMap.has(film.id)) {
-          // Add genre to existing entry
           filmMap.get(film.id)._genres.add(genreId);
         } else {
           filmMap.set(film.id, {
@@ -570,12 +575,15 @@ async function loadAllFilms() {
       });
     });
 
-    // Convert to array, sort by date then title
-    allFilms = Array.from(filmMap.values()).sort((a, b) => {
-      const dateCompare = a.release_date.localeCompare(b.release_date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.title.localeCompare(b.title);
-    });
+    // Sort by popularity desc first, cap at 50, then re-sort by date for display
+    allFilms = Array.from(filmMap.values())
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, 50)
+      .sort((a, b) => {
+        const dateCompare = a.release_date.localeCompare(b.release_date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.title.localeCompare(b.title);
+      });
 
     // Fetch studios for first 30 films to avoid rate limits
     const studioPromises = allFilms.slice(0, 30).map(f => fetchStudios(f.id));
@@ -676,16 +684,14 @@ function renderCard(film, idx, monthFilms) {
         <span class="weekday">${weekday}</span>
       </div>
       <div class="film-body">
-        <div class="film-title">${film.title}</div>
+        <a href="${tmdbUrl}" target="_blank" rel="noopener" class="film-title-link"><div class="film-title">${film.title}</div></a>
         <div class="film-meta">
           ${genreTags}
           ${studio}
         </div>
         <div class="film-synopsis">${synopsis}</div>
       </div>
-      <div class="film-link-col">
-        <a href="${tmdbUrl}" target="_blank" rel="noopener" class="film-link">TMDB →</a>
-      </div>
+      <div class="film-link-col"></div>
     </div>`;
 }
 
