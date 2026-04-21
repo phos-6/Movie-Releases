@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0e0c0b">
+<title>The /// Reel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0e0c0b;
+    --ink2: #131110;
+    --ink3: #1a1714;
+    --border: #252018;
+    --border2: #2e2820;
+    --paper: #f0ebe0;
+    --paper-dim: #a09080;
+    --red: #b83025;
+    --red-dim: #6e1c14;
+    --gold: #b8943a;
+    --green: #4a8050;
+    --white: #faf8f3;
+  }
+
+  html { height: 100%; }
+
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(14,12,11,0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--paper);
+  }
+  .logo em { color: var(--red); font-style: normal; }
+
+  nav { display: flex; gap: 2px; }
+
+  .nav-btn {
+    background: none; border: none;
+    color: var(--paper-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 7px 10px; cursor: pointer; border-radius: 2px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-btn:hover { color: var(--paper); }
+  .nav-btn.active { color: var(--paper); background: rgba(255,255,255,0.07); }
+
+  main { flex: 1; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; animation: rise 0.2s ease; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── LOG VIEW ── */
+  #log-view { padding: 0 18px 60px; }
+
+  .log-header {
+    padding: 20px 0 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .log-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.12em; color: var(--paper-dim);
+    text-transform: uppercase;
+  }
+
+  .year-group { margin-top: 26px; }
+
+  .year-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--paper-dim);
+    padding-bottom: 9px; border-bottom: 1px solid var(--border);
+  }
+
+  .film-row {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    gap: 0 13px;
+    align-items: start;
+    padding: 11px 8px;
+    margin: 0 -8px;
+    border-bottom: 1px solid var(--border3, #18150f);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .film-row:active { background: rgba(255,255,255,0.04); }
+
+  .thumb {
+    width: 42px; height: 63px;
+    object-fit: cover; border-radius: 2px;
+    background: var(--ink3); display: block; flex-shrink: 0;
+  }
+  .thumb-placeholder {
+    width: 42px; height: 63px;
+    background: var(--ink3); border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--border2); font-size: 16px; flex-shrink: 0;
+  }
+
+  .row-info { min-width: 0; padding-top: 1px; }
+
+  .row-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 700; line-height: 1.2;
+    color: var(--white); margin-bottom: 4px;
+  }
+
+  .row-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--paper-dim);
+    letter-spacing: 0.04em; line-height: 1.7;
+  }
+
+  .row-genre {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; color: var(--gold); margin-top: 3px;
+  }
+
+  .row-right { text-align: right; padding-top: 1px; flex-shrink: 0; }
+
+  .stars-sm { color: var(--gold); font-size: 10px; letter-spacing: 1px; }
+
+  .row-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; color: var(--border2); margin-top: 5px;
+  }
+
+  .empty-state { text-align: center; padding: 64px 20px; }
+  .empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-style: italic; color: var(--border2); margin-bottom: 8px;
+  }
+  .empty-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--border);
+  }
+
+  /* ── DETAIL VIEW ── */
+  #detail-view { padding-bottom: 60px; }
+
+  .back-btn {
+    background: none; border: none;
+    color: var(--paper-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 14px 18px 10px;
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--paper); }
+
+  .detail-backdrop {
+    width: 100%; height: 190px;
+    object-fit: cover; display: block;
+    opacity: 0.28; filter: grayscale(25%);
+  }
+  .detail-backdrop-ph {
+    width: 100%; height: 70px;
+    background: linear-gradient(180deg, var(--ink3) 0%, var(--ink) 100%);
+  }
+
+  .detail-body { padding: 0 18px 40px; margin-top: -48px; position: relative; }
+
+  .detail-poster-row {
+    display: flex; gap: 15px; align-items: flex-end; margin-bottom: 16px;
+  }
+
+  .detail-poster {
+    width: 78px; height: 117px; object-fit: cover;
+    border-radius: 3px; flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+    border: 1px solid var(--border2);
+  }
+  .detail-poster-ph {
+    width: 78px; height: 117px;
+    background: var(--ink3); border-radius: 3px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--border2); font-size: 22px;
+    border: 1px solid var(--border2);
+  }
+
+  .detail-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 900; line-height: 1.1; color: var(--white);
+  }
+  .detail-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--paper-dim); letter-spacing: 0.1em; margin-top: 6px;
+  }
+
+  hr.div { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+  .mlabel {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--paper-dim); margin-bottom: 3px;
+  }
+  .mvalue {
+    font-family: 'Crimson Pro', serif;
+    font-size: 14px; color: var(--paper); line-height: 1.4;
+  }
+
+  .rating-row { display: flex; gap: 7px; margin-bottom: 16px; }
+  .star-tap {
+    font-size: 24px; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+    transition: transform 0.1s; color: var(--border2);
+  }
+  .star-tap.lit { color: var(--gold); }
+  .star-tap:active { transform: scale(1.35); }
+
+  .plot-text {
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px; line-height: 1.75;
+    color: #9a9080; font-style: italic; margin-bottom: 16px;
+  }
+
+  .review-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--red); margin-bottom: 8px;
+  }
+  .review-text {
+    font-family: 'Crimson Pro', serif;
+    font-size: 17px; line-height: 1.8; color: var(--paper);
+    border-left: 2px solid var(--red-dim); padding-left: 14px;
+  }
+
+  .delete-btn {
+    background: none; border: 1px solid var(--red-dim);
+    color: var(--red-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 9px 16px; cursor: pointer; border-radius: 2px;
+    transition: all 0.15s; margin-top: 28px; display: inline-block;
+  }
+  .delete-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── ADD VIEW ── */
+  #add-view { padding: 18px 18px 60px; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--paper-dim);
+    padding-bottom: 9px; border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .blurb-box {
+    background: var(--ink2); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 13px; margin-bottom: 12px;
+    transition: border-color 0.15s;
+  }
+  .blurb-box:focus-within { border-color: #4a3e30; }
+
+  .blurb-ta {
+    width: 100%; background: none; border: none; outline: none;
+    color: var(--paper);
+    font-family: 'Crimson Pro', serif; font-size: 16px; line-height: 1.65;
+    resize: none; min-height: 88px;
+  }
+  .blurb-ta::placeholder { color: #3a3228; }
+
+  .blurb-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; color: #3a3228; margin-top: 8px;
+    letter-spacing: 0.04em; line-height: 1.6;
+  }
+  .blurb-hint strong { color: #5a4e3e; font-weight: 400; }
+
+  .primary-btn {
+    background: var(--red); border: none; color: var(--white);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 13px 20px; cursor: pointer; border-radius: 2px;
+    transition: background 0.15s; width: 100%;
+  }
+  .primary-btn:hover { background: #9a2820; }
+  .primary-btn:disabled { background: #2a1c18; color: #5a3830; cursor: not-allowed; }
+
+  .or-div {
+    text-align: center; margin: 20px 0;
+    position: relative; color: var(--border2);
+    font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.2em;
+  }
+  .or-div::before, .or-div::after {
+    content: ''; position: absolute; top: 50%;
+    width: calc(50% - 18px); height: 1px; background: var(--border);
+  }
+  .or-div::before { left: 0; }
+  .or-div::after { right: 0; }
+
+  .field { margin-bottom: 13px; }
+
+  .field-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--paper-dim); margin-bottom: 6px; display: block;
+  }
+
+  .field-input {
+    width: 100%; background: var(--ink2); border: 1px solid var(--border2);
+    border-radius: 3px; padding: 10px 12px;
+    color: var(--paper); font-family: 'Crimson Pro', serif; font-size: 16px;
+    outline: none; transition: border-color 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field-input:focus { border-color: #4a3e30; }
+  .field-input::placeholder { color: #3a3228; }
+
+  textarea.field-input { resize: vertical; min-height: 88px; line-height: 1.6; }
+
+  .search-dropdown {
+    background: var(--ink2); border: 1px solid var(--border2); border-top: none;
+    border-radius: 0 0 3px 3px; overflow: hidden;
+  }
+
+  .search-item {
+    display: flex; gap: 11px; align-items: center;
+    padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+    transition: background 0.1s; -webkit-tap-highlight-color: transparent;
+  }
+  .search-item:last-child { border-bottom: none; }
+  .search-item:active { background: rgba(255,255,255,0.05); }
+
+  .search-thumb {
+    width: 28px; height: 42px; object-fit: cover;
+    border-radius: 1px; background: var(--ink3); flex-shrink: 0; display: block;
+  }
+
+  .search-title { font-family: 'Crimson Pro', serif; font-size: 14px; color: var(--paper); }
+  .search-year { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--paper-dim); margin-top: 2px; }
+
+  .confirmed {
+    font-family: 'DM Mono', monospace; font-size: 8px;
+    color: var(--green); margin-top: 5px; letter-spacing: 0.04em;
+  }
+
+  .star-picker { display: flex; gap: 8px; margin-top: 4px; }
+  .star-pick {
+    font-size: 26px; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+    color: var(--border2); transition: color 0.1s, transform 0.1s;
+  }
+  .star-pick.lit { color: var(--gold); }
+  .star-pick:active { transform: scale(1.3); }
+
+  /* ── CONFIRM OVERLAY ── */
+  .overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(14,12,11,0.92);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: flex-end;
+    animation: fadeIn 0.15s ease;
+  }
+  .overlay.hidden { display: none; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .confirm-sheet {
+    background: var(--ink2); border: 1px solid var(--border2);
+    border-bottom: none; border-radius: 12px 12px 0 0;
+    padding: 20px 18px 36px; width: 100%;
+    animation: slideUp 0.2s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .confirm-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--paper-dim); margin-bottom: 14px;
+  }
+
+  .confirm-card {
+    display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px;
+  }
+
+  .confirm-poster {
+    width: 60px; height: 90px; object-fit: cover;
+    border-radius: 2px; flex-shrink: 0; background: var(--ink3);
+    border: 1px solid var(--border2);
+  }
+  .confirm-poster-ph {
+    width: 60px; height: 90px; background: var(--ink3);
+    border-radius: 2px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--border2); font-size: 18px; border: 1px solid var(--border2);
+  }
+
+  .confirm-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 900; color: var(--white); line-height: 1.15;
+  }
+  .confirm-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--paper-dim); margin-top: 5px; line-height: 1.7;
+  }
+
+  .confirm-btns { display: flex; flex-direction: column; gap: 8px; }
+
+  .btn-confirm {
+    background: var(--red); border: none; color: var(--white);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 13px; cursor: pointer; border-radius: 2px; transition: background 0.15s;
+  }
+  .btn-confirm:hover { background: #9a2820; }
+
+  .btn-next {
+    background: none; border: 1px solid var(--border2); color: var(--paper-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 11px; cursor: pointer; border-radius: 2px; transition: all 0.15s;
+  }
+  .btn-next:hover { border-color: var(--paper-dim); color: var(--paper); }
+  .btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-cancel {
+    background: none; border: none; color: #5a4e3e;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 10px; cursor: pointer;
+  }
+
+  /* ── STATS VIEW ── */
+  #stats-view { padding: 18px 18px 60px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+
+  .stat-block {
+    background: var(--ink2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 16px;
+  }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px; font-weight: 900; color: var(--paper); line-height: 1;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--paper-dim); margin-top: 5px;
+  }
+
+  .list-block {
+    background: var(--ink2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 2px 14px; margin-bottom: 18px;
+  }
+
+  .list-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-family: 'Crimson Pro', serif; font-size: 15px; color: var(--paper);
+  }
+  .list-row:last-child { border-bottom: none; }
+
+  .list-count {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    color: var(--gold); flex-shrink: 0; margin-left: 10px;
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.06em; color: var(--gold);
+    min-height: 20px; padding: 2px 0 6px;
+    transition: opacity 0.3s;
+  }
+  .status-bar.err { color: var(--red); }
+  .status-bar.hide { opacity: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">THE <em>///</em> REEL</div>
+    <nav>
+      <button class="nav-btn active" data-view="log">Log</button>
+      <button class="nav-btn" data-view="add">+ Add</button>
+      <button class="nav-btn" data-view="stats">Stats</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- LOG -->
+    <div id="log-view" class="view active">
+      <div style="padding: 0 18px;">
+        <div class="log-header">
+          <span class="log-count" id="log-count">0 films logged</span>
+          <div class="status-bar hide" id="log-status"></div>
+        </div>
+      </div>
+      <div id="film-list"></div>
+    </div>
+
+    <!-- DETAIL -->
+    <div id="detail-view" class="view">
+      <button class="back-btn" id="back-btn">← Back</button>
+      <div id="detail-content"></div>
+    </div>
+
+    <!-- ADD -->
+    <div id="add-view" class="view">
+      <div class="status-bar hide" id="add-status"></div>
+
+      <div class="section-label">Quick Add</div>
+      <div class="blurb-box">
+        <textarea class="blurb-ta" id="blurb-ta" rows="4"
+          placeholder='Watched "The Mummy" last weekend — Cronin doing his Evil Dead thing but with less conviction.'></textarea>
+        <div class="blurb-hint">
+          Put the film title in <strong>"quotes"</strong>. Include a year like <strong>(2026)</strong> if there are multiple versions.
+          Date defaults to today if you don't mention one.
+        </div>
+      </div>
+      <button class="primary-btn" id="blurb-btn">Find &amp; Confirm</button>
+
+      <div class="or-div">or add manually</div>
+      <div class="section-label">Manual Entry</div>
+
+      <div class="field">
+        <label class="field-label">Film Title</label>
+        <input class="field-input" id="m-title" type="text" placeholder="Start typing to search TMDB…" autocomplete="off">
+        <div class="search-dropdown" id="m-results" style="display:none;"></div>
+        <div class="confirmed" id="m-confirmed" style="display:none;"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Date Watched</label>
+        <input class="field-input" id="m-date" type="date" value="">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Rating</label>
+        <div class="star-picker" id="m-stars">
+          <span class="star-pick" data-n="1">★</span>
+          <span class="star-pick" data-n="2">★</span>
+          <span class="star-pick" data-n="3">★</span>
+          <span class="star-pick" data-n="4">★</span>
+          <span class="star-pick" data-n="5">★</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Review / Notes</label>
+        <textarea class="field-input" id="m-review" rows="4" placeholder="What did you think?"></textarea>
+      </div>
+
+      <button class="primary-btn" id="m-submit">Add to Log</button>
+    </div>
+
+    <!-- STATS -->
+    <div id="stats-view" class="view">
+      <div class="stat-grid">
+        <div class="stat-block">
+          <div class="stat-num" id="s-total">0</div>
+          <div class="stat-label">Films Logged</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num" id="s-avg">—</div>
+          <div class="stat-label">Avg Rating</div>
+        </div>
+      </div>
+      <div id="s-directors"></div>
+      <div id="s-genres"></div>
+    </div>
+  </main>
+</div>
+
+<!-- CONFIRM OVERLAY -->
+<div class="overlay hidden" id="overlay">
+  <div class="confirm-sheet">
+    <div class="confirm-label" id="confirm-label">Is this the right film?</div>
+    <div class="confirm-card" id="confirm-card"></div>
+    <div class="confirm-btns">
+      <button class="btn-confirm" id="btn-confirm">Yes, Log This Film</button>
+      <button class="btn-next" id="btn-next">Not This One — Try Next Result</button>
+      <button class="btn-cancel" id="btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TMDB_KEY = '798305bccb176e0e19a68692c23dd2cd';
+const TMDB_IMG  = 'https://image.tmdb.org/t/p/w500';
+const TMDB_BACK = 'https://image.tmdb.org/t/p/w1280';
+const STORE_KEY = 'reel-films-v1';
+
+// ── Storage ──
+function loadFilms() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; }
+}
+function saveFilms(films) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(films));
+}
+
+let films = loadFilms();
+let currentFilm = null;   // for detail view
+let mRating = 0;
+let mFilmData = null;
+let mDebounce = null;
+
+// confirm overlay state
+let confirmResults = [];
+let confirmIdx = 0;
+let pendingEntry = {};   // review, date, rating from blurb parse
+
+// ── TMDB ──
+async function tmdbSearch(query, year) {
+  let url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&include_adult=false`;
+  if (year) url += `&year=${year}`;
+  const r = await fetch(url);
+  const d = await r.json();
+  return d.results || [];
+}
+
+async function tmdbDetails(id) {
+  const r = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&append_to_response=credits`);
+  return r.json();
+}
+
+function buildFilmData(d) {
+  return {
+    tmdbId: d.id,
+    title: d.title,
+    year: (d.release_date || '').slice(0, 4),
+    director: (d.credits?.crew || []).find(c => c.job === 'Director')?.name || '',
+    cast: (d.credits?.cast || []).slice(0, 4).map(a => a.name).join(', '),
+    genres: (d.genres || []).map(g => g.name).join(', '),
+    runtime: d.runtime ? `${d.runtime} min` : '',
+    plot: d.overview || '',
+    poster: d.poster_path ? TMDB_IMG + d.poster_path : null,
+    backdrop: d.backdrop_path ? TMDB_BACK + d.backdrop_path : null,
+  };
+}
+
+// ── Blurb Parsing ──
+function parseBlurb(text) {
+  // Extract quoted title
+  const titleMatch = text.match(/["""'']([^"""'']+)["""'']/);
+  const title = titleMatch ? titleMatch[1].trim() : null;
+
+  // Extract year: (2024) or [2024] or just 4-digit year near title
+  const yearMatch = text.match(/[\(\[]?((?:19|20)\d{2})[\)\]]?/);
+  const year = yearMatch ? yearMatch[1] : null;
+
+  // Extract date phrases → convert to YYYY-MM-DD
+  const today = new Date();
+  let date = today.toISOString().slice(0, 10);
+
+  const lower = text.toLowerCase();
+
+  if (/\btoday\b/.test(lower)) {
+    date = today.toISOString().slice(0, 10);
+  } else if (/\blast night\b/.test(lower)) {
+    const d = new Date(today); d.setDate(d.getDate() - 1);
+    date = d.toISOString().slice(0, 10);
+  } else if (/\byesterday\b/.test(lower)) {
+    const d = new Date(today); d.setDate(d.getDate() - 1);
+    date = d.toISOString().slice(0, 10);
+  } else if (/\blast weekend\b/.test(lower)) {
+    const d = new Date(today);
+    const day = d.getDay(); // 0=Sun
+    d.setDate(d.getDate() - (day === 0 ? 1 : day + 1));
+    date = d.toISOString().slice(0, 10);
+  } else if (/\blast\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(lower)) {
+    const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    const targetDay = days.indexOf(lower.match(/last\s+(\w+)/)[1]);
+    const d = new Date(today);
+    let diff = today.getDay() - targetDay;
+    if (diff <= 0) diff += 7;
+    d.setDate(d.getDate() - diff);
+    date = d.toISOString().slice(0, 10);
+  } else {
+    // Look for "April 15" or "April 15th" style
+    const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+    const mMatch = lower.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?\b/);
+    if (mMatch) {
+      const mo = months.indexOf(mMatch[1]) + 1;
+      const dy = parseInt(mMatch[2]);
+      const yr = today.getFullYear();
+      date = `${yr}-${String(mo).padStart(2,'0')}-${String(dy).padStart(2,'0')}`;
+    }
+  }
+
+  // Review: remove the quoted title and year from text, use remainder
+  let review = text;
+  if (titleMatch) review = review.replace(titleMatch[0], '').trim();
+  review = review.replace(/[\(\[]?((?:19|20)\d{2})[\)\]]?/, '').trim();
+  // Strip leading punctuation/connectors
+  review = review.replace(/^[\s\-–—,\.]+/, '').trim();
+
+  return { title, year, date, review };
+}
+
+// ── Status helpers ──
+function flashStatus(id, msg, isErr = false, duration = 4000) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status-bar' + (isErr ? ' err' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'status-bar hide'; }, duration);
+}
+
+// ── Navigation ──
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(name + '-view').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === name);
+  });
+  window.scrollTo(0, 0);
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    showView(btn.dataset.view);
+    if (btn.dataset.view === 'stats') renderStats();
+  });
+});
+
+// ── LOG RENDER ──
+function renderLog() {
+  const count = films.length;
+  document.getElementById('log-count').textContent = `${count} film${count !== 1 ? 's' : ''} logged`;
+
+  const list = document.getElementById('film-list');
+  if (count === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-title">Nothing logged yet.</div>
+      <div class="empty-sub">Tap + Add to begin</div>
+    </div>`;
+    return;
+  }
+
+  // Group by watched year
+  const groups = {};
+  films.forEach(f => {
+    const y = (f.dateWatched || '').slice(0, 4) || 'Unknown';
+    (groups[y] = groups[y] || []).push(f);
+  });
+
+  const years = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+  list.innerHTML = years.map(yr => `
+    <div class="year-group" style="padding: 0 18px;">
+      <div class="year-label">${yr}</div>
+      ${groups[yr].map(f => `
+        <div class="film-row" data-id="${f.id}">
+          ${f.poster
+            ? `<img class="thumb" src="${f.poster}" alt="${esc(f.title)}" loading="lazy">`
+            : `<div class="thumb-placeholder">🎬</div>`}
+          <div class="row-info">
+            <div class="row-title">${esc(f.title)}</div>
+            <div class="row-meta">${[f.year, f.director, f.runtime].filter(Boolean).join('  ·  ')}</div>
+            ${f.genres ? `<div class="row-genre">${esc(f.genres.split(', ').slice(0,2).join(' · '))}</div>` : ''}
+          </div>
+          <div class="row-right">
+            ${f.rating ? `<div class="stars-sm">${'★'.repeat(f.rating)}</div>` : ''}
+            <div class="row-date">${f.dateWatched || ''}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.film-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const f = films.find(x => x.id === row.dataset.id);
+      if (f) openDetail(f);
+    });
+  });
+}
+
+// ── DETAIL ──
+function openDetail(f) {
+  currentFilm = f;
+  const el = document.getElementById('detail-content');
+
+  el.innerHTML = `
+    ${f.backdrop
+      ? `<img class="detail-backdrop" src="${f.backdrop}" alt="">`
+      : `<div class="detail-backdrop-ph"></div>`}
+    <div class="detail-body">
+      <div class="detail-poster-row">
+        ${f.poster
+          ? `<img class="detail-poster" src="${f.poster}" alt="${esc(f.title)}">`
+          : `<div class="detail-poster-ph">🎬</div>`}
+        <div>
+          <div class="detail-title">${esc(f.title)}</div>
+          <div class="detail-sub">${[f.year, f.genres].filter(Boolean).join(' · ')}</div>
+        </div>
+      </div>
+
+      <div class="mlabel" style="margin-bottom:6px;">Your Rating</div>
+      <div class="rating-row" id="d-stars">
+        ${[1,2,3,4,5].map(n => `<span class="star-tap ${n <= (f.rating||0) ? 'lit' : ''}" data-n="${n}">★</span>`).join('')}
+      </div>
+
+      <div class="meta-grid">
+        ${f.director ? `<div><div class="mlabel">Director</div><div class="mvalue">${esc(f.director)}</div></div>` : ''}
+        ${f.cast     ? `<div><div class="mlabel">Cast</div><div class="mvalue">${esc(f.cast)}</div></div>` : ''}
+        ${f.runtime  ? `<div><div class="mlabel">Runtime</div><div class="mvalue">${esc(f.runtime)}</div></div>` : ''}
+        <div><div class="mlabel">Watched</div><div class="mvalue">${f.dateWatched || ''}</div></div>
+      </div>
+
+      <hr class="div">
+
+      ${f.plot ? `
+        <div class="mlabel" style="margin-bottom:6px;">Synopsis</div>
+        <div class="plot-text">${esc(f.plot)}</div>
+      ` : ''}
+
+      ${f.review ? `
+        <div class="review-label">Your Review</div>
+        <div class="review-text">${esc(f.review)}</div>
+      ` : ''}
+
+      <button class="delete-btn" id="d-delete">Remove Entry</button>
+    </div>
+  `;
+
+  // Star taps
+  el.querySelectorAll('.star-tap').forEach(s => {
+    s.addEventListener('click', () => {
+      const n = parseInt(s.dataset.n);
+      films = films.map(x => x.id === currentFilm.id ? { ...x, rating: n } : x);
+      saveFilms(films);
+      currentFilm = { ...currentFilm, rating: n };
+      el.querySelectorAll('.star-tap').forEach((st, i) => {
+        st.classList.toggle('lit', i < n);
+      });
+    });
+  });
+
+  el.querySelector('#d-delete').addEventListener('click', () => {
+    films = films.filter(x => x.id !== currentFilm.id);
+    saveFilms(films);
+    renderLog();
+    showView('log');
+    flashStatus('log-status', 'Entry removed');
+  });
+
+  showView('detail');
+}
+
+document.getElementById('back-btn').addEventListener('click', () => {
+  showView('log');
+  renderLog();
+});
+
+// ── BLURB / QUICK ADD ──
+document.getElementById('blurb-btn').addEventListener('click', async () => {
+  const text = document.getElementById('blurb-ta').value.trim();
+  if (!text) return;
+
+  const { title, year, date, review } = parseBlurb(text);
+
+  if (!title) {
+    flashStatus('add-status', 'Wrap the film title in "quotes" so I can find it.', true);
+    return;
+  }
+
+  document.getElementById('blurb-btn').disabled = true;
+  flashStatus('add-status', `Searching TMDB for "${title}"…`);
+
+  try {
+    const results = await tmdbSearch(title, year);
+    if (!results.length) {
+      flashStatus('add-status', `No TMDB results for "${title}". Try manual entry.`, true);
+      document.getElementById('blurb-btn').disabled = false;
+      return;
+    }
+
+    confirmResults = results;
+    confirmIdx = 0;
+    pendingEntry = { review, date, rating: 0 };
+    flashStatus('add-status', '');
+    showConfirm();
+  } catch (e) {
+    flashStatus('add-status', 'Network error. Check connection.', true);
+  }
+
+  document.getElementById('blurb-btn').disabled = false;
+});
+
+// ── CONFIRM OVERLAY ──
+async function showConfirm() {
+  const overlay = document.getElementById('overlay');
+  const card = document.getElementById('confirm-card');
+  const label = document.getElementById('confirm-label');
+  const btnNext = document.getElementById('btn-next');
+
+  const r = confirmResults[confirmIdx];
+  label.textContent = confirmIdx === 0 ? 'Is this the right film?' : `Result ${confirmIdx + 1} of ${confirmResults.length} — is this it?`;
+  btnNext.disabled = confirmIdx >= confirmResults.length - 1;
+
+  // Show basic info immediately, then load full details
+  card.innerHTML = `
+    ${r.poster_path
+      ? `<img class="confirm-poster" src="${TMDB_IMG + r.poster_path}" alt="">`
+      : `<div class="confirm-poster-ph">🎬</div>`}
+    <div>
+      <div class="confirm-title">${esc(r.title)}</div>
+      <div class="confirm-meta">${(r.release_date || '').slice(0,4)}</div>
+    </div>
+  `;
+
+  overlay.classList.remove('hidden');
+
+  // Load full details in background for director info
+  try {
+    const details = await tmdbDetails(r.id);
+    const director = (details.credits?.crew || []).find(c => c.job === 'Director')?.name || '';
+    const genres = (details.genres || []).map(g => g.name).join(', ');
+    card.querySelector('.confirm-meta').innerHTML = `
+      ${(r.release_date || '').slice(0,4)}${director ? ` · ${esc(director)}` : ''}<br>
+      ${genres ? `<span style="color:var(--gold)">${esc(genres)}</span>` : ''}
+    `;
+    // Cache details on the result object
+    confirmResults[confirmIdx]._details = details;
+  } catch {}
+}
+
+document.getElementById('btn-confirm').addEventListener('click', async () => {
+  const r = confirmResults[confirmIdx];
+  let fd;
+  if (r._details) {
+    fd = buildFilmData(r._details);
+  } else {
+    try {
+      const details = await tmdbDetails(r.id);
+      fd = buildFilmData(details);
+    } catch {
+      fd = {
+        tmdbId: r.id, title: r.title,
+        year: (r.release_date || '').slice(0,4),
+        director: '', cast: '', genres: '', runtime: '',
+        plot: r.overview || '', poster: r.poster_path ? TMDB_IMG + r.poster_path : null,
+        backdrop: r.backdrop_path ? TMDB_BACK + r.backdrop_path : null,
+      };
+    }
+  }
+
+  const entry = {
+    id: Date.now().toString(),
+    ...fd,
+    review: pendingEntry.review,
+    rating: pendingEntry.rating || 0,
+    dateWatched: pendingEntry.date,
+    dateAdded: new Date().toISOString(),
+  };
+
+  films = [entry, ...films];
+  saveFilms(films);
+  renderLog();
+
+  document.getElementById('overlay').classList.add('hidden');
+  document.getElementById('blurb-ta').value = '';
+  showView('log');
+  flashStatus('log-status', `"${entry.title}" logged`);
+});
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  confirmIdx++;
+  if (confirmIdx < confirmResults.length) showConfirm();
+});
+
+document.getElementById('btn-cancel').addEventListener('click', () => {
+  document.getElementById('overlay').classList.add('hidden');
+});
+
+// ── MANUAL ADD ──
+document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
+
+// Live TMDB search
+document.getElementById('m-title').addEventListener('input', function () {
+  mFilmData = null;
+  document.getElementById('m-confirmed').style.display = 'none';
+  const q = this.value.trim();
+  if (!q || q.length < 2) { document.getElementById('m-results').style.display = 'none'; return; }
+  clearTimeout(mDebounce);
+  mDebounce = setTimeout(async () => {
+    const results = await tmdbSearch(q);
+    const el = document.getElementById('m-results');
+    if (!results.length) { el.style.display = 'none'; return; }
+    el.innerHTML = results.slice(0, 5).map(r => `
+      <div class="search-item" data-id="${r.id}">
+        ${r.poster_path
+          ? `<img class="search-thumb" src="${TMDB_IMG + r.poster_path}" alt="" loading="lazy">`
+          : `<div class="search-thumb"></div>`}
+        <div>
+          <div class="search-title">${esc(r.title)}</div>
+          <div class="search-year">${(r.release_date || '').slice(0,4)}</div>
+        </div>
+      </div>
+    `).join('');
+    el.style.display = 'block';
+
+    el.querySelectorAll('.search-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        el.style.display = 'none';
+        const details = await tmdbDetails(item.dataset.id);
+        mFilmData = buildFilmData(details);
+        document.getElementById('m-title').value = mFilmData.title;
+        const conf = document.getElementById('m-confirmed');
+        conf.textContent = `✓ ${mFilmData.title} (${mFilmData.year})${mFilmData.director ? ' · ' + mFilmData.director : ''}`;
+        conf.style.display = 'block';
+      });
+    });
+  }, 380);
+});
+
+// Star picker
+document.getElementById('m-stars').addEventListener('click', function (e) {
+  const s = e.target.closest('.star-pick');
+  if (!s) return;
+  mRating = parseInt(s.dataset.n);
+  this.querySelectorAll('.star-pick').forEach((el, i) => {
+    el.classList.toggle('lit', i < mRating);
+  });
+});
+
+document.getElementById('m-submit').addEventListener('click', async () => {
+  const title = document.getElementById('m-title').value.trim();
+  if (!title) return;
+
+  document.getElementById('m-submit').disabled = true;
+  flashStatus('add-status', 'Adding…');
+
+  try {
+    let fd = mFilmData;
+    if (!fd) {
+      const results = await tmdbSearch(title);
+      if (results.length) {
+        const details = await tmdbDetails(results[0].id);
+        fd = buildFilmData(details);
+      } else {
+        fd = { title, year: '', director: '', cast: '', genres: '', runtime: '', plot: '', poster: null, backdrop: null };
+      }
+    }
+
+    const entry = {
+      id: Date.now().toString(),
+      ...fd,
+      review: document.getElementById('m-review').value.trim(),
+      rating: mRating,
+      dateWatched: document.getElementById('m-date').value,
+      dateAdded: new Date().toISOString(),
+    };
+
+    films = [entry, ...films];
+    saveFilms(films);
+    renderLog();
+
+    // Reset
+    document.getElementById('m-title').value = '';
+    document.getElementById('m-review').value = '';
+    document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('m-confirmed').style.display = 'none';
+    mRating = 0; mFilmData = null;
+    document.querySelectorAll('.star-pick').forEach(s => s.classList.remove('lit'));
+
+    showView('log');
+    flashStatus('log-status', `"${entry.title}" logged`);
+  } catch {
+    flashStatus('add-status', 'Something went wrong. Check connection.', true);
+  }
+
+  document.getElementById('m-submit').disabled = false;
+});
+
+// ── STATS ──
+function renderStats() {
+  document.getElementById('s-total').textContent = films.length;
+  const rated = films.filter(f => f.rating > 0);
+  document.getElementById('s-avg').textContent = rated.length
+    ? (rated.reduce((s, f) => s + f.rating, 0) / rated.length).toFixed(1) : '—';
+
+  const dirMap = {}, genMap = {};
+  films.forEach(f => {
+    if (f.director) dirMap[f.director] = (dirMap[f.director] || 0) + 1;
+    (f.genres || '').split(', ').filter(Boolean).forEach(g => {
+      genMap[g] = (genMap[g] || 0) + 1;
+    });
+  });
+
+  const topDirs = Object.entries(dirMap).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const topGen  = Object.entries(genMap).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  document.getElementById('s-directors').innerHTML = topDirs.length ? `
+    <div class="section-label">Most Watched Directors</div>
+    <div class="list-block">
+      ${topDirs.map(([n,c]) => `<div class="list-row"><span>${esc(n)}</span><span class="list-count">${c} film${c>1?'s':''}</span></div>`).join('')}
+    </div>` : '';
+
+  document.getElementById('s-genres').innerHTML = topGen.length ? `
+    <div class="section-label">Top Genres</div>
+    <div class="list-block">
+      ${topGen.map(([g,c]) => `<div class="list-row"><span>${esc(g)}</span><span class="list-count">${c}</span></div>`).join('')}
+    </div>` : '';
+}
+
+// ── Utility ──
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──
+renderLog();
+</script>
+</body>
+</html>
