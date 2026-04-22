@@ -243,7 +243,7 @@ let fileSha = null; // GitHub requires the file's SHA to update it
 async function loadFilms() {
   try {
     const r = await fetch(GITHUB_API, {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     if (!r.ok) throw new Error('fetch failed');
     const data = await r.json();
@@ -262,7 +262,7 @@ async function saveFilms(f) {
   try {
     // Always fetch the latest SHA right before writing to avoid stale-SHA conflicts
     const check = await fetch(GITHUB_API, {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     if (!check.ok) throw new Error('SHA fetch failed');
     const current = await check.json();
@@ -271,7 +271,7 @@ async function saveFilms(f) {
     const body = { message: 'Update films.json', content: btoa(unescape(encodeURIComponent(JSON.stringify(f, null, 2)))), sha: fileSha };
     const r = await fetch(GITHUB_API, {
       method: 'PUT',
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     if (!r.ok) throw new Error('save failed');
