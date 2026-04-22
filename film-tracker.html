@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INCOMING // Film Tracker</title>
+<link rel="manifest" href="data:application/json,{
+  %22name%22: %22Film Tracker%22,
+  %22short_name%22: %22Film Tracker%22,
+  %22start_url%22: %22.%22,
+  %22display%22: %22standalone%22,
+  %22background_color%22: %220a0a0a%22,
+  %22theme_color%22: %220a0a0a%22,
+  %22icons%22: [{
+    %22src%22: %22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>%22,
+    %22sizes%22: %22any%22,
+    %22type%22: %22image/svg+xml%22
+  }]
+}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Film Tracker">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -712,6 +729,16 @@ document.querySelectorAll('.genre-btn').forEach(btn => {
 
 // Init
 loadAllFilms();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  const sw = `
+    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+  `;
+  const blob = new Blob([sw], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(() => {});
+}
 </script>
 </body>
 </html>
